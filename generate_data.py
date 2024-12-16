@@ -70,9 +70,9 @@ def generate_string():
     chars = "ABCDEFGHJKLMNOPRSTUVWXYZ"
     sentence = (
         "".join(random.choices(numbers, k=3))
-        + "".join(random.choices(chars, k=2))
-        + "".join(random.choices(numbers, k=1))
         + "".join(random.choices(chars, k=3))
+        + "".join(random.choices(numbers, k=1))
+        + "".join(random.choices(chars, k=2))
         + "".join(random.choices(numbers, k=1))
     )
     return sentence
@@ -138,6 +138,7 @@ def main():
     if os.path.exists(os.path.join(save_dir, "annotations")) == False:
         os.makedirs(os.path.join(save_dir, "annotations"))
     num_images = args.num_images
+    background_name = os.path.basename(background_image_path).split(".")[0]
     char_registry = registry_chars(base_dir)
     images_path = os.path.join(save_dir, "images")
     annotations_path = os.path.join(save_dir, "annotations")
@@ -146,8 +147,8 @@ def main():
         char_list = analyze_sentence(sentence, char_registry)
         background = Image.open(background_image_path)
         position = (
-            int(background.width / 2.5) + random.randint(-30, 30),
-            int(background.height / 1.4) + random.randint(-20, 20),
+            int(background.width / 1.75) + random.randint(-5, 5),
+            int(background.height / 2.3) + random.randint(-2, 2),
         )
         center = position
         angle = random.randint(-2, 2)
@@ -167,11 +168,11 @@ def main():
                     "annotation": char,
                 }
             )
-            position = (position[0] + char_img.width + 2, position[1])
-        background.save(os.path.join(images_path, f"background1_{i+1}.png"))
+            position = (position[0] + char_img.width + 1, position[1])
+        background.save(os.path.join(images_path, f"{background_name}_{i+1}.png"))
         annotations = json.dumps(annotations_list)
         with open(
-            os.path.join(annotations_path, f"background1_{i+1}.png.txt"), "w"
+            os.path.join(annotations_path, f"{background_name}_{i+1}.png.txt"), "w"
         ) as f:
             f.write(f"{annotations}")
             f.close()
