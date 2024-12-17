@@ -43,7 +43,7 @@ def registry_chars(base_dir):
         "N": (os.path.join(base_dir, "N", "N.png"), 23),
         "O": (os.path.join(base_dir, "O", "O.png"), 24),
         "P": (os.path.join(base_dir, "P", "P.png"), 25),
-        # "Q": (os.path.join(base_dir, "Q", "Q.png"), 26),
+        "Q": (os.path.join(base_dir, "Q", "Q.png"), 26),
         "R": (os.path.join(base_dir, "R", "R.png"), 27),
         "S": (os.path.join(base_dir, "S", "S.png"), 28),
         "T": (os.path.join(base_dir, "T", "T.png"), 29),
@@ -69,8 +69,8 @@ def generate_string():
     numbers = "0123456789"
     chars = "ABCDEFGHJKLMNOPRSTUVWXYZ"
     sentence = (
-        "".join(random.choices(numbers, k=3))
-        + "".join(random.choices(chars, k=3))
+        "".join(random.choices(numbers, k=1))
+        + "".join(random.choices(chars, k=5))
         + "".join(random.choices(numbers, k=1))
         + "".join(random.choices(chars, k=2))
         + "".join(random.choices(numbers, k=1))
@@ -93,13 +93,21 @@ def process_char_img(char_path):
     char_img = Image.open(char_path)
     char_img = char_img.convert("RGBA")
     if char_path.endswith("M.png") or char_path.endswith("W.png"):
-        char_img = char_img.resize((23, 25))
+        char_img = char_img.resize((23, 25), resample=Image.Resampling.NEAREST)
     else:
-        char_img = char_img.resize((15, 25))
+        char_img = char_img.resize((15, 25), resample=Image.Resampling.NEAREST)
     char_img_array = np.array(char_img)
-    char_img_array[:, :, 3] = char_img_array[:, :, 3] * random.uniform(0.7, 0.8)
+    # Modify bounding box
+    alpha = char_img_array[:, :, 3]
+    xmin = np.min(np.where(alpha > 0)[1]) - 1
+    xmax = np.max(np.where(alpha > 0)[1]) + 2
+    ymin = np.min(np.where(alpha > 0)[0]) - 1
+    ymax = np.max(np.where(alpha > 0)[0]) + 2
+    char_img_array = char_img_array[ymin:ymax, xmin:xmax]
+
+    # char_img_array[:, :, 3] = char_img_array[:, :, 3] * random.uniform(0.7, 0.8)
     char_img = Image.fromarray(char_img_array, "RGBA")
-    char_img = char_img.filter(ImageFilter.GaussianBlur(radius=0.5))
+    char_img = char_img.filter(ImageFilter.GaussianBlur(radius=0.2))
     return char_img
 
 
@@ -108,17 +116,17 @@ def args_parser():
     parser.add_argument(
         "--base-dir",
         type=str,
-        default=os.path.join(".", "dataset1"),
+        default=os.path.join(".", "dataset2"),
         help="Path to the main directory containing character folders",
     )
     parser.add_argument(
         "--background-image-path",
         type=str,
-        default=os.path.join(".", "background", "background1.png"),
+        default=os.path.join(".", "background", "background3.jpg"),
         help="Path to the background image",
     )
     parser.add_argument(
-        "--save-dir", type=str, default="./output", help="Path to save the image"
+        "--save-dir", type=str, default="./output3", help="Path to save the image"
     )
     parser.add_argument(
         "--num-images", type=int, default=100, help="Number of images generated"
@@ -147,7 +155,7 @@ def main():
         char_list = analyze_sentence(sentence, char_registry)
         background = Image.open(background_image_path)
         position = (
-            int(background.width / 1.75) + random.randint(-5, 5),
+            int(background.width / 2.5) + random.randint(-5, 5),
             int(background.height / 2.3) + random.randint(-2, 2),
         )
         center = position
